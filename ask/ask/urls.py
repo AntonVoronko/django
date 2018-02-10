@@ -15,14 +15,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.conf.urls import url
-from qa.views import test, question_list, popular_questions, question_detail, question_add, answer_add
+from qa.views import test, question_list, popular_questions, question_detail, question_add, answer_add, signup, login_user
 
 urlpatterns = [
     url(r'^$', question_list, name='main'),
     url(r'^popular/$', popular_questions),
     url(r'^question/(?P<id>\d+)/$', question_detail),
-    url(r'^login/', test),
-    url(r'^signup/', test),
+    url(r'^login/', login_user),
+    url(r'^signup/', signup),
     url(r'^answer/$', answer_add),
     url(r'^ask/', question_add),
     url(r'^new/', test),

@@ -1,15 +1,19 @@
-from django.http import HttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
-from qa.models import Question
+from django.views.decorators.http import require_GET
 from django.core.paginator import Paginator, EmptyPage
+from qa.models import Question
+from django.http import HttpResponseRedirect
 from qa.forms import AskForm, AnswerForm, SignUpForm, LoginForm
+from datetime import datetime, timedelta
+from django.contrib.auth import authenticate, login
+from django.core.urlresolvers import reverse
 
 def test(request, *args, **kwargs):
     return HttpResponse('OK')
 
 def question_detail(request, id):
-    # if request.method == 'POST':
-    #     return answer_add(request, id)
+    if request.method == 'POST':
+        return answer_add(request, id)
     question = get_object_or_404(Question, id=id)
     form = AnswerForm(initial={'question':id,})
     return render(request, 'question_detail.html', {
@@ -17,6 +21,8 @@ def question_detail(request, id):
         'answers': question.answer_set.all()[:],
         'form': form
         })
+
+
 
 def paginate(request, qs):
     try:
@@ -39,7 +45,7 @@ def paginate(request, qs):
 
 
 def question_list(request):
-    questions = Question.objects.new()
+    questions = Question.objects.all()
     #paginator.baseurl = '/?page='
     page = paginate(request, questions)
     return render(request, 'questions.html', {
@@ -54,6 +60,7 @@ def popular_questions(request):
         'questions': page.object_list,
         'page': page,
     })
+
 
 def question_add(request):
     if request.method == 'POST':
@@ -88,3 +95,50 @@ def answer_add(request, id=2):
     return render(request, 'answer_add.html', {
         'form': form,
          })
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            if user is not None and user.is_active:
+                user_data = form.cleaned_data
+                user = authenticate(username = user_data['username'], password = user_data['password'])
+                if user:
+                    login(request, user)
+                    return HttpResponseRedirect(reverse('main'))
+                else:
+                    return HttpResponseRedirect('login/')
+    else:
+        form = SignUpForm()
+    return render(request, 'signup.html', {
+        'form': form
+        })
+
+def login_user(request):
+    error = ''
+    if request.method == 'POST':
+        url = request.POST.get('continue', '/')
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            if user is not None and user.is_active:
+                login(request, user)
+                return HttpResponseRedirect(url)
+        else:
+            error = 'Incorrect username or password'
+    else:
+        form = LoginForm()
+    return render(request, 'login.html', {
+        'form': form,
+        'error': error
+        })
+
+
+
+def logout(request):
+    sessid = request.COOKIE.get('sessid')
+    if sessid is not None:
+        Session.objects.delete(key=sessid)
+    url = request.GET.get('continue', '/')
+    return HttpResponseRedirect(url)

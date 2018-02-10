@@ -75,11 +75,11 @@ class SignUpForm(forms.Form):
         return user
 
 class LoginForm(forms.Form):
-	username = forms.CharField(max_length=25)
-	password = forms.CharField(max_length=25)
+    username = forms.CharField(max_length=25)
+    password = forms.CharField(max_length=25)
 
-	def clean(self):
-		return self.cleaned_data
-	def save(self):
-		user = authenticate(username=self.cleaned_data['username'], password=self.cleaned_data['password'])
-		return user
+    def clean(self):
+        return self.cleaned_data
+    def save(self):
+        user = authenticate(username=self.cleaned_data['username'], password=self.cleaned_data['password'])
+        return user
