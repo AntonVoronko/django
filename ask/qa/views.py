@@ -2,6 +2,7 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from qa.models import Question
 from django.core.paginator import Paginator, EmptyPage
+from qa.forms import AskForm, AnswerForm, SignUpForm, LoginForm
 
 def test(request, *args, **kwargs):
     return HttpResponse('OK')
@@ -38,7 +39,7 @@ def paginate(request, qs):
 
 
 def question_list(request):
-    questions = Question.objects.all()
+    questions = Question.objects.new()
     #paginator.baseurl = '/?page='
     page = paginate(request, questions)
     return render(request, 'questions.html', {
@@ -53,3 +54,37 @@ def popular_questions(request):
         'questions': page.object_list,
         'page': page,
     })
+
+def question_add(request):
+    if request.method == 'POST':
+        form = AskForm(request.POST)
+        if form.is_valid():
+            question = form.save()
+            if request.user:
+                question.author = request.user
+                question.save()
+            url = question.get_absolute_url()
+            return HttpResponseRedirect(url)
+    else:
+        form = AskForm()
+    return render(request, 'question_add.html', {'form': form, })
+
+
+def answer_add(request, id=2):
+    if request.method == 'POST':
+        #form = AnswerForm({'question_id': id, 'text': request.POST['text']})
+        form = AnswerForm(request.POST)
+        if form.is_valid():
+            answer = form.save()
+            if request.user:
+                answer.author = request.user
+                answer.save()
+            question = answer.question
+            url = question.get_absolute_url()
+            #url = 'ask/'
+            return HttpResponseRedirect(url)
+    else:
+        form = AnswerForm()
+    return render(request, 'answer_add.html', {
+        'form': form,
+         })
